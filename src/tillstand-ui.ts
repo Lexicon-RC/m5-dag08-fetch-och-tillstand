@@ -3,6 +3,12 @@
 import { tolkaVaderkod } from "./api";
 import type { Vader } from "./typer";
 
+// Valfria funktioner som skickas till visaTillstand för att hantera knapptryck och klart läge.
+export interface Alternativ<K extends { typ: "klar" }> {
+  vidForsokIgen: () => void;
+  visaKlar: (container: HTMLElement, klarTillstand: K) => void;
+}
+
 // Skriver ut rätt sak i container beroende på tillstånd.
 //   { typ: "laddar" }                 -> <p class="laddar" role="status">Laddar...</p>
 //   { typ: "tomt" }                   -> <p class="tom">Inga rätter hittades.</p>

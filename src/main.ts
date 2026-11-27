@@ -10,7 +10,16 @@ import { hamtaMeny, hamtaVader } from "./api";
 import { laddaMeny, laddaData } from "./tillstand";
 import { visaTillstand, visaVader } from "./tillstand-ui";
 import { hamta } from "./dom";
-import type { Ratt, Filter, OrderRad, KlarMeny, FetchFn } from "./typer";
+import type {
+  Ratt,
+  Filter,
+  OrderRad,
+  KlarMeny,
+  FetchFn,
+  Tillstand,
+  DataTillstand,
+  Vader,
+} from "./typer";
 
 // Sätt till true om väder-API:et inte fungerar (till exempel på skolans nät).
 const ANVAND_RESERVDATA = false;
@@ -52,6 +61,19 @@ function ritaMeny(): void {
 //   - vidForsokIgen: laddaMenyn själv (så att knappen "Försök igen" fungerar).
 //   - visaKlar: spara tillstand.ratter i variabeln meny, anropa ritaMeny() och uppdatera ordern med visaOrder.
 function laddaMenyn(): void {
+  laddaMeny(
+    () => hamtaMeny(),
+    (tillstand: Tillstand) => {
+      visaTillstand(lista, tillstand, {
+        vidForsokIgen: laddaMenyn,
+        visaKlar: (_container, klarTillstand) => {
+          meny = klarTillstand.ratter;
+          ritaMeny();
+          visaOrder(orderRef, order, meny);
+        },
+      });
+    },
+  );
 }
 
 kopplaFilter(filterGrupp, (filter) => {
@@ -79,17 +101,29 @@ hamta("#rensa-order").addEventListener("click", () => {
 
 // ---- Vädret ----
 // Vid reservläge byter vi ut fetch mot en funktion som läser en lokal fil.
-const vaderFetch: FetchFn = ANVAND_RESERVDATA ? () => fetch("data/vader-stockholm.json") : fetch;
+const vaderFetch: FetchFn = ANVAND_RESERVDATA
+  ? () => fetch("data/vader-stockholm.json")
+  : fetch;
 
 // TODO 2: Skriv laddaVader(). Hämta vald stad: STADER[stadVal.value].
 //   Anropa laddaData(() => hamtaVader(stad.lat, stad.lon, vaderFetch), vidTillstand).
 //   I vidTillstand: visaTillstand(vaderResultat, tillstand, { vidForsokIgen: laddaVader, visaKlar }).
 //   visaKlar ska anropa visaVader(container, stad.namn, tillstand.data).
 function laddaVader(): void {
+  const stad = STADER[stadVal.value];
+
+  laddaData(
+    () => hamtaVader(stad.lat, stad.lon, vaderFetch),
+    (tillstand: DataTillstand<Vader>) => {
+      visaTillstand(vaderResultat, tillstand, {
+        vidForsokIgen: laddaVader,
+        visaKlar: (container, klarTillstand) => {
+          visaVader(container, stad.namn, klarTillstand.data);
+        },
+      });
+    },
+  );
 }
-
-// TODO 3: Lyssna på submit på vaderForm. Anropa preventDefault och sedan laddaVader().
-
 // ---- Start ----
 visaOrder(orderRef, order, meny);
 laddaMenyn();

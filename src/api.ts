@@ -60,13 +60,19 @@ export async function hamtaVader(
       weather_code?: number;
     };
   };
-  if (!data?.current) {
+  const current = data?.current;
+  if (
+    !current ||
+    typeof current.temperature_2m !== "number" ||
+    typeof current.wind_speed_10m !== "number" ||
+    typeof current.weather_code !== "number"
+  ) {
     throw new Error("Oväntat svar från väder-API:et");
   }
   return {
-    temperatur: data.current.temperature_2m,
-    vindhastighet: data.current.wind_speed_10m,
-    kod: data.current.weather_code,
+    temperatur: current.temperature_2m,
+    vindhastighet: current.wind_speed_10m,
+    kod: current.weather_code,
   };
 }
 
